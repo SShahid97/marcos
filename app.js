@@ -1,6 +1,7 @@
 require('dotenv').config({path: `${process.cwd()}/.env`});
 const express = require('express');
-const authRoute = require('./route/authRoute');
+const authRouter = require('./route/authRoute');
+const proejctRouter = require('./route/projectRoute');
 const catchAsync = require('./utils/catchAsync');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controller/errorController');
@@ -9,8 +10,8 @@ app.use(express.json());
 const PORT = process.env.APP_PORT || 4000;
 
 // all routes will be here
-app.use('/api/v1/auth', authRoute);
-
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/projects', proejctRouter);
 /// this is for any invalid route which is not defined
 app.use("*", catchAsync (async (req, res, next)=>{
     // this works when this callback is not async (but using the catchAsync we can make it work)

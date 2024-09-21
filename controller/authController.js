@@ -78,4 +78,39 @@ const login = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports = { signup, login };
+const authenticate = catchAsync(async (req, res, next)=>{
+    // 1. get the token from headers
+    let idToken = '';
+    if(req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+        idToken = req.headers.authorization.split(" ")[1];
+    }
+    if(!idToken){
+        return next(new AppError('Unauthorized', 401))
+    }
+
+    // 2. token verification 
+    const tokenDetail = jwt.verify(idToken, process.env.JWT_SECRET_KEY);
+
+
+    // 3. get the user details from db and add to the req object
+    const freshUser = await user.findByPk(tokenDetail.id);
+    if(!freshUser){
+        return next(new AppError('user no longer exists', 400))   
+    }
+
+    req.user = freshUser;
+    return next();
+
+})
+
+const authorize = (...userType) =>{
+    const checkPermission = (req, res, next)=>{
+        if(!userType.includes(req.user.userType)){
+            return next(new AppError("You don't have permission to perform this action", 403))
+        }
+        return next();
+    }
+    return checkPermission;
+}
+
+module.exports = { signup, login, authenticate, authorize };
