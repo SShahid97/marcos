@@ -18,7 +18,6 @@ const sendErrorProd= (error, res)=>{
     const statusCode = error.statusCode || 500;
     const status = error.statusCode || 500;
     const message = error.message || 'Something went wrong';
-    const stack = error.stack;
 
     if(error.isOperational){
         return res.status(statusCode).json({

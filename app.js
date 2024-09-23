@@ -10,6 +10,13 @@ app.use(express.json());
 const PORT = process.env.APP_PORT || 4000;
 
 // all routes will be here
+// app.use('/',(req, res)=>{
+//     res.status(200).json({
+//         status:200,
+//         message:'Server is up and running'
+//     })
+//     console.log('Hello World!')
+// })
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/projects', proejctRouter);
 /// this is for any invalid route which is not defined

@@ -2,6 +2,7 @@ const project = require("../db/models/project");
 const user = require("../db/models/user");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const { Op } = require("sequelize");
 
 const createProject = catchAsync(async (req, res, next) => {
   const body = req.body;
@@ -26,7 +27,32 @@ const createProject = catchAsync(async (req, res, next) => {
 });
 
 const getAllProjects = catchAsync(async (req, res, next) => {
-  const result = await project.findAll({ include: user });
+  let {page, limit, search} = req.query;
+  page = page > 0 ? page-1:page;
+  const result = await project.findAll( { 
+    offset: limit*page, 
+    limit: limit, 
+    title: {
+      [Op.like]: `%eb`
+    },
+      // [Op.or]: [
+      //   {
+      //     title: {
+      //       [Op.like]: `${search}%`
+      //     }
+      //   },
+      //   {
+      //     description: {
+      //       [Op.like]: `%${search}%`
+      //     }
+      //   }
+      // ],
+    include: [
+    {
+      model: user,
+      attributes: { exclude: ['password'] } // this will exclude the password field
+    }
+  ] });
   const count = await project.count();
   return res.status(200).json({
     status: 200,
@@ -40,7 +66,12 @@ const getAllProjects = catchAsync(async (req, res, next) => {
 
 const getProjectById = catchAsync(async (req, res, next) => {
   const projectId = req.params.id;
-  const result = await project.findByPk(projectId, { include: user });
+  const result = await project.findByPk(projectId, { include: [
+    {
+      model: user, // assuming `User` is your user model
+      attributes: { exclude: ['password'] } // this will exclude the password field
+    }
+  ] });
   if (!result) {
     return next(new AppError("Invalid project id", 400));
   }
