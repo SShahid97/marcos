@@ -28,31 +28,28 @@ const createProject = catchAsync(async (req, res, next) => {
 
 const getAllProjects = catchAsync(async (req, res, next) => {
   let {page, limit, search} = req.query;
+  if(page === undefined){
+    return next(new AppError("page (query param) is required", 400));
+  }
+  if(limit === undefined){
+    return next(new AppError("limit (query param) is required", 400));
+  }
   page = page > 0 ? page-1:page;
   const result = await project.findAll( { 
     offset: limit*page, 
-    limit: limit, 
-    title: {
-      [Op.like]: `%eb`
+    limit: limit,
+    where:{
+      title: {
+        [Op.iLike]: `%${search}%`
+      }
     },
-      // [Op.or]: [
-      //   {
-      //     title: {
-      //       [Op.like]: `${search}%`
-      //     }
-      //   },
-      //   {
-      //     description: {
-      //       [Op.like]: `%${search}%`
-      //     }
-      //   }
-      // ],
     include: [
     {
       model: user,
       attributes: { exclude: ['password'] } // this will exclude the password field
     }
-  ] });
+  ],order: [
+    ['updatedAt', 'DESC']] });
   const count = await project.count();
   return res.status(200).json({
     status: 200,
@@ -68,12 +65,12 @@ const getProjectById = catchAsync(async (req, res, next) => {
   const projectId = req.params.id;
   const result = await project.findByPk(projectId, { include: [
     {
-      model: user, // assuming `User` is your user model
+      model: user, 
       attributes: { exclude: ['password'] } // this will exclude the password field
     }
   ] });
   if (!result) {
-    return next(new AppError("Invalid project id", 400));
+    return next(new AppError("Project not found", 404));
   }
   return res.status(200).json({
     status: 200,
@@ -91,9 +88,8 @@ const updateProject = catchAsync(async (req, res, next) => {
     const result = await project.findOne({
       where: { id: projectId, createdBy: userId },
     });
-    console.log("result: ", result);
     if (!result) {
-      return next(new AppError("Invalid project id or user id", 400));
+      return next(new AppError("Project not found", 404));
     }
 
     result.title = body.title;
@@ -104,6 +100,7 @@ const updateProject = catchAsync(async (req, res, next) => {
     result.productUrl = body.productUrl;
     result.category = body.category;
     result.tags = body.tags;
+    result.updatedAt = new Date().toISOString();
 
     await result.save();
   } catch (err) {
@@ -123,9 +120,8 @@ const deleteProject = catchAsync(async (req, res, next) => {
     const result = await project.findOne({
       where: { id: projectId, createdBy: userId },
     });
-    console.log("result: ", result);
     if (!result) {
-      return next(new AppError("Invalid project id or user id", 400));
+      return next(new AppError("Project not found", 404));
     }
 
     await result.destroy();

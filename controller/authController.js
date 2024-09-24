@@ -54,6 +54,9 @@ const login = catchAsync(async (req, res, next) => {
   }
 
   let result = await user.findOne({
+    attributes:{
+      exclude:['deletedAt', 'createdAt', 'updatedAt', 'id']
+    },
     where: {
       email,
     },
@@ -63,9 +66,7 @@ const login = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid credentials", 401));
   }
   result = result.toJSON();
-
   delete result.password;
-  delete result.deletedAt;
   
   result.token = generateToken({
     id: result.id,
@@ -73,7 +74,7 @@ const login = catchAsync(async (req, res, next) => {
 
   return res.status(200).json({
     status: 200,
-    message: "Data fetched successfully",
+    message: "user signed in successfully",
     data: result,
   });
 });

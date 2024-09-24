@@ -1,5 +1,8 @@
 require('dotenv').config({path: `${process.cwd()}/.env`});
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
+
 const authRouter = require('./route/authRoute');
 const proejctRouter = require('./route/projectRoute');
 const catchAsync = require('./utils/catchAsync');
@@ -8,6 +11,41 @@ const globalErrorHandler = require('./controller/errorController');
 const app = express();
 app.use(express.json());
 const PORT = process.env.APP_PORT || 4000;
+
+// Swagger setup
+const swaggerOptions = {
+    // swaggerDefinition: {
+    //   myapi: '3.0.0',
+    //   info: {
+    //     title: 'Marcos APIS',
+    //     version: '1.0.0',
+    //     description: 'API documentation',
+    //   },
+    //   servers: [
+    //     {
+    //       url: 'http://localhost:4040',
+    //     },
+    //   ],
+    // },
+    definition: {
+        openapi: "3.1.0",
+        info: {
+          title: "Marcos APIS",
+          version: "0.1.0",
+          description:
+            "This is a simple CRUD API application made with Express and documented with Swagger",
+        },
+        servers: [
+          {
+            url: "http://localhost:4040",
+          },
+        ],
+      },
+    apis: ['./route/*.js'], // files containing annotations as above
+  };
+  
+  const swaggerDocs = swaggerJsDoc(swaggerOptions);
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // all routes will be here
 // app.use('/',(req, res)=>{
